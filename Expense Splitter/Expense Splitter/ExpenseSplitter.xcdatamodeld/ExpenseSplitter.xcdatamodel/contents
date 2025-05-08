@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="23788" systemVersion="24D81" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithSwiftData="YES" userDefinedModelVersionIdentifier="">
+    <entity name="Expense" representedClassName="Expense" syncable="YES" codeGenerationType="class">
+        <attribute name="date" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="note" attributeType="String"/>
+        <attribute name="tax" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="tip" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
+        <relationship name="group" maxCount="1" deletionRule="Nullify" destinationEntity="Group" inverseName="expenses" inverseEntity="Group"/>
+        <relationship name="items" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="LineItem" inverseName="expense" inverseEntity="LineItem"/>
+        <relationship name="payer" maxCount="1" deletionRule="Nullify" destinationEntity="Person" inverseName="expensesPaid" inverseEntity="Person"/>
+    </entity>
+    <entity name="Group" representedClassName="Group" syncable="YES" codeGenerationType="class">
+        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="name" attributeType="String"/>
+        <relationship name="expenses" optional="YES" toMany="YES" deletionRule="Nullify" ordered="YES" destinationEntity="Expense" inverseName="group" inverseEntity="Expense"/>
+        <relationship name="members" toMany="YES" deletionRule="Nullify" destinationEntity="Person" inverseName="group" inverseEntity="Person"/>
+    </entity>
+    <entity name="LineItem" representedClassName="LineItem" syncable="YES" codeGenerationType="class">
+        <attribute name="amount" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="name" attributeType="String"/>
+        <relationship name="expense" maxCount="1" deletionRule="Nullify" destinationEntity="Expense" inverseName="items" inverseEntity="Expense"/>
+    </entity>
+    <entity name="Person" representedClassName="Person" syncable="YES" codeGenerationType="class">
+        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="name" attributeType="String"/>
+        <relationship name="expensesPaid" toMany="YES" deletionRule="Nullify" destinationEntity="Expense" inverseName="payer" inverseEntity="Expense"/>
+        <relationship name="group" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Group" inverseName="members" inverseEntity="Group"/>
+    </entity>
+</model>
