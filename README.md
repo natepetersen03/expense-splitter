@@ -145,12 +145,12 @@ Core Data service for local operations:
 ## Current Status
 
 The app currently provides a solid foundation for:
-- ✅ **Firebase Authentication**: Secure user sign-up and sign-in
-- ✅ **User Profile Management**: Create and edit user profiles
-- ✅ **Friend System**: Search, add, and manage friends with real-time updates
-- ✅ **Group Creation**: Create and delete groups with Firebase storage
-- ✅ **Real-time Data Sync**: All changes sync instantly across devices
-- ✅ **Hybrid Architecture**: Firebase for new features, Core Data for legacy support
+- **Firebase Authentication**: Secure user sign-up and sign-in
+- **User Profile Management**: Create and edit user profiles
+- **Friend System**: Search, add, and manage friends with real-time updates
+- **Group Creation**: Create and delete groups with Firebase storage
+- **Real-time Data Sync**: All changes sync instantly across devices
+- **Hybrid Architecture**: Firebase for new features, Core Data for legacy support
 
 ## TODO - Next Steps
 
@@ -190,13 +190,6 @@ The app currently provides a solid foundation for:
    - Accessibility improvements
    - Performance optimizations
 
-## Getting Started
-
-1. Open the project in Xcode
-2. Build and run on iOS Simulator or device
-3. Create a user profile on first launch
-4. Add friends and create groups
-5. Start managing shared expenses!
 
 ## Dependencies
 
