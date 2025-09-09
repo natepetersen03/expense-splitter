@@ -16,6 +16,7 @@ struct FriendsView: View {
     @State private var showingAddFriend = false
     @State private var searchText = ""
     @State private var showingAlert = false
+    @State private var alertTitle = "Error"
     @State private var alertMessage = ""
     
     var filteredFriends: [Person] {
@@ -87,7 +88,7 @@ struct FriendsView: View {
             .sheet(isPresented: $showingAddFriend) {
                 AddFriendView()
             }
-            .alert("Error", isPresented: $showingAlert) {
+            .alert(alertTitle, isPresented: $showingAlert) {
                 Button("OK") { }
             } message: {
                 Text(alertMessage)
@@ -99,6 +100,56 @@ struct FriendsView: View {
         for index in offsets {
             let friend = filteredFriends[index]
             userService.removeFriend(friend)
+        }
+    }
+    
+    private func addFriend(_ user: Person) {
+        guard let currentUser = userService.currentUser else { 
+            alertTitle = "Error"
+            alertMessage = "Please sign in to add friends"
+            showingAlert = true
+            return 
+        }
+        
+        // Don't add yourself as a friend
+        if user.id == currentUser.id {
+            alertTitle = "Error"
+            alertMessage = "You can't add yourself as a friend"
+            showingAlert = true
+            return
+        }
+        
+        // Check if already friends
+        if userService.friends.contains(where: { $0.id == user.id }) {
+            alertTitle = "Error"
+            alertMessage = "This user is already your friend"
+            showingAlert = true
+            return
+        }
+        
+        // Check if there's already a pending request
+        let hasPendingRequest = userService.pendingFriendRequests.contains { request in
+            (request.sender?.id == currentUser.id && request.receiver?.id == user.id) ||
+            (request.sender?.id == user.id && request.receiver?.id == currentUser.id)
+        }
+        
+        if hasPendingRequest {
+            alertTitle = "Error"
+            alertMessage = "You already have a pending friend request with this user"
+            showingAlert = true
+            return
+        }
+        
+        // Send friend request
+        let success = userService.sendFriendRequest(to: user, context: viewContext)
+        if success {
+            alertTitle = "Success"
+            alertMessage = "Friend request sent successfully!"
+            showingAlert = true
+        } else {
+            alertTitle = "Error"
+            alertMessage = "Failed to send friend request. Please try again."
+            showingAlert = true
         }
     }
 }
@@ -151,6 +202,7 @@ struct AddFriendView: View {
     @State private var searchResults: [Person] = []
     @State private var isSearching = false
     @State private var showingAlert = false
+    @State private var alertTitle = "Error"
     @State private var alertMessage = ""
     
     var body: some View {
@@ -223,7 +275,7 @@ struct AddFriendView: View {
                     }
                 }
             }
-            .alert("Error", isPresented: $showingAlert) {
+            .alert(alertTitle, isPresented: $showingAlert) {
                 Button("OK") { }
             } message: {
                 Text(alertMessage)
@@ -252,6 +304,7 @@ struct AddFriendView: View {
     
     private func addFriend(_ user: Person) {
         guard let currentUser = userService.currentUser else { 
+            alertTitle = "Error"
             alertMessage = "Please sign in to add friends"
             showingAlert = true
             return 
@@ -259,6 +312,7 @@ struct AddFriendView: View {
         
         // Don't add yourself as a friend
         if user.id == currentUser.id {
+            alertTitle = "Error"
             alertMessage = "You can't add yourself as a friend"
             showingAlert = true
             return
@@ -266,6 +320,7 @@ struct AddFriendView: View {
         
         // Check if already friends
         if userService.friends.contains(where: { $0.id == user.id }) {
+            alertTitle = "Error"
             alertMessage = "This user is already your friend"
             showingAlert = true
             return
@@ -278,6 +333,7 @@ struct AddFriendView: View {
         }
         
         if hasPendingRequest {
+            alertTitle = "Error"
             alertMessage = "You already have a pending friend request with this user"
             showingAlert = true
             return
@@ -286,9 +342,11 @@ struct AddFriendView: View {
         // Send friend request
         let success = userService.sendFriendRequest(to: user, context: viewContext)
         if success {
+            alertTitle = "Success"
             alertMessage = "Friend request sent successfully!"
             showingAlert = true
         } else {
+            alertTitle = "Error"
             alertMessage = "Failed to send friend request. Please try again."
             showingAlert = true
         }
@@ -351,6 +409,8 @@ struct SearchBar: View {
             
             TextField("Search friends...", text: $text)
                 .textFieldStyle(PlainTextFieldStyle())
+                .autocapitalization(.none)
+                .disableAutocorrection(true)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)

@@ -84,6 +84,10 @@ struct SignUpView: View {
                                 .textFieldStyle(RoundedBorderTextFieldStyle())
                                 .textContentType(.newPassword)
                                 .autocorrectionDisabled()
+                            
+                            Text("Password must be at least 8 characters long")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
                         }
                         
                         VStack(alignment: .leading, spacing: 8) {
@@ -129,21 +133,23 @@ struct SignUpView: View {
         !name.isEmpty &&
         !password.isEmpty &&
         !confirmPassword.isEmpty &&
-        password == confirmPassword
+        password == confirmPassword &&
+        password.count >= 8
     }
     
     private func signUp() {
         guard isFormValid else {
-            alertMessage = "Please fill in all required fields and ensure passwords match"
+            if password.count < 8 {
+                alertMessage = "Password must be at least 8 characters long"
+            } else if password != confirmPassword {
+                alertMessage = "Passwords do not match"
+            } else {
+                alertMessage = "Please fill in all required fields"
+            }
             showingAlert = true
             return
         }
         
-        guard password.count >= 6 else {
-            alertMessage = "Password must be at least 6 characters long"
-            showingAlert = true
-            return
-        }
         
         if userService.createAccount(
             username: username,

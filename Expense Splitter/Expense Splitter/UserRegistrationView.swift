@@ -198,7 +198,7 @@ struct UserRegistrationView: View {
                !password.isEmpty &&
                !confirmPassword.isEmpty &&
                password == confirmPassword &&
-               password.count >= 6 &&
+               password.count >= 8 &&
                userService.isValidUsername(username) &&
                userService.isValidPhoneNumber(phoneNumber) &&
                (email.isEmpty || userService.isValidEmail(email))

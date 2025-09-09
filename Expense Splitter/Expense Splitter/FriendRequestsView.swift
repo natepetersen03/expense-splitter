@@ -46,6 +46,12 @@ struct FriendRequestsView: View {
             .navigationTitle("Friend Requests")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Refresh") {
+                        userService.refreshFriendRequests(context: viewContext)
+                    }
+                }
+                
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {
                         dismiss()
