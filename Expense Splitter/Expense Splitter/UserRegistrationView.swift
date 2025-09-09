@@ -15,6 +15,8 @@ struct UserRegistrationView: View {
     @State private var fullName = ""
     @State private var phoneNumber = ""
     @State private var email = ""
+    @State private var password = ""
+    @State private var confirmPassword = ""
     @State private var showingAlert = false
     @State private var alertMessage = ""
     @State private var isCreatingProfile = false
@@ -97,6 +99,34 @@ struct UserRegistrationView: View {
                                     .foregroundColor(.red)
                             }
                         }
+                        
+                        // Password Field
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Password")
+                                .font(.headline)
+                            SecureField("Create a password", text: $password)
+                                .textFieldStyle(.roundedBorder)
+                            
+                            if !password.isEmpty && password.count < 6 {
+                                Text("Password must be at least 6 characters")
+                                    .font(.caption)
+                                    .foregroundColor(.red)
+                            }
+                        }
+                        
+                        // Confirm Password Field
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Confirm Password")
+                                .font(.headline)
+                            SecureField("Confirm your password", text: $confirmPassword)
+                                .textFieldStyle(.roundedBorder)
+                            
+                            if !confirmPassword.isEmpty && password != confirmPassword {
+                                Text("Passwords do not match")
+                                    .font(.caption)
+                                    .foregroundColor(.red)
+                            }
+                        }
                     }
                     .padding(.horizontal)
                     
@@ -161,6 +191,10 @@ struct UserRegistrationView: View {
         return !username.isEmpty &&
                !fullName.isEmpty &&
                !phoneNumber.isEmpty &&
+               !password.isEmpty &&
+               !confirmPassword.isEmpty &&
+               password == confirmPassword &&
+               password.count >= 6 &&
                userService.isValidUsername(username) &&
                userService.isValidPhoneNumber(phoneNumber) &&
                (email.isEmpty || userService.isValidEmail(email))
@@ -170,19 +204,20 @@ struct UserRegistrationView: View {
         isCreatingProfile = true
         
         let emailValue = email.isEmpty ? nil : email
+        let phoneValue = phoneNumber.isEmpty ? nil : phoneNumber
         
-        let success = userService.createUserProfile(
+        let success = userService.createAccount(
             username: username,
             name: fullName,
-            phoneNumber: phoneNumber,
             email: emailValue,
-            context: viewContext
+            phoneNumber: phoneValue,
+            password: password
         )
         
         isCreatingProfile = false
         
         if success {
-            // Profile created successfully
+            // Account created successfully
             // The app will automatically navigate to the main view
         } else {
             alertMessage = "Username already exists. Please choose a different username."

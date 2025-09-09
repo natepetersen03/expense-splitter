@@ -30,6 +30,7 @@
         <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="isCurrentUser" optional="YES" attributeType="Boolean" defaultValueString="NO"/>
         <attribute name="name" attributeType="String"/>
+        <attribute name="password" attributeType="String"/>
         <attribute name="phoneNumber" optional="YES" attributeType="String"/>
         <attribute name="username" optional="YES" attributeType="String"/>
         <relationship name="createdGroups" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Group" inverseName="creator" inverseEntity="Group"/>

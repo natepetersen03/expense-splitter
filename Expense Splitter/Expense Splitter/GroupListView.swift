@@ -81,6 +81,12 @@ struct GroupListView: View {
                                 Text("(\(userService.pendingInvitations.count))")
                             }
                         }
+                        
+                        Divider()
+                        
+                        Button(action: { userService.signOut() }) {
+                            Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
+                        }
                     } label: {
                         Image(systemName: "person.circle")
                     }

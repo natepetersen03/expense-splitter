@@ -18,6 +18,7 @@ class UserService: ObservableObject {
     
     private let userDefaults = UserDefaults.standard
     private let currentUserIdKey = "currentUserId"
+    private var managedObjectContext: NSManagedObjectContext?
     
     private init() {
         // Don't load data during init - wait for context to be available
@@ -26,9 +27,87 @@ class UserService: ObservableObject {
     // MARK: - Initialization
     
     func initialize(context: NSManagedObjectContext) {
+        self.managedObjectContext = context
         loadCurrentUser(context: context)
         loadFriends(context: context)
         loadPendingInvitations(context: context)
+    }
+    
+    // MARK: - Authentication
+    
+    func signIn(username: String, password: String) -> Bool {
+        guard let context = getContext() else { return false }
+        
+        let request: NSFetchRequest<Person> = Person.fetchRequest()
+        request.predicate = NSPredicate(format: "username == %@", username)
+        
+        do {
+            let users = try context.fetch(request)
+            if let user = users.first, user.password == password {
+                // Set as current user
+                user.isCurrentUser = true
+                currentUser = user
+                
+                // Save user ID to UserDefaults
+                userDefaults.set(user.id?.uuidString, forKey: currentUserIdKey)
+                
+                try context.save()
+                return true
+            }
+        } catch {
+            print("Error signing in: \(error)")
+        }
+        
+        return false
+    }
+    
+    func createAccount(username: String, name: String, email: String?, phoneNumber: String?, password: String) -> Bool {
+        guard let context = getContext() else { return false }
+        
+        // Check if username already exists
+        if userExists(username: username, context: context) {
+            return false
+        }
+        
+        let newUser = Person(context: context)
+        newUser.id = UUID()
+        newUser.username = username
+        newUser.name = name
+        newUser.email = email
+        newUser.phoneNumber = phoneNumber
+        newUser.password = password
+        newUser.isCurrentUser = true
+        
+        currentUser = newUser
+        
+        // Save user ID to UserDefaults
+        userDefaults.set(newUser.id?.uuidString, forKey: currentUserIdKey)
+        
+        do {
+            try context.save()
+            return true
+        } catch {
+            print("Error creating account: \(error)")
+            return false
+        }
+    }
+    
+    func signOut() {
+        // Clear current user
+        currentUser?.isCurrentUser = false
+        currentUser = nil
+        
+        // Clear stored user ID
+        userDefaults.removeObject(forKey: currentUserIdKey)
+        
+        // Save changes
+        if let context = getContext() {
+            do {
+                try context.save()
+            } catch {
+                print("Error signing out: \(error)")
+            }
+        }
     }
     
     // MARK: - User Profile Management
@@ -271,6 +350,10 @@ class UserService: ObservableObject {
     func isValidEmail(_ email: String) -> Bool {
         let emailRegex = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
         return NSPredicate(format: "SELF MATCHES %@", emailRegex).evaluate(with: email)
+    }
+    
+    private func getContext() -> NSManagedObjectContext? {
+        return managedObjectContext
     }
 }
 

@@ -14,7 +14,7 @@ struct ContentView: View {
         if userService.currentUser != nil {
             GroupListView()
         } else {
-            UserRegistrationView()
+            LoginView()
         }
     }
 }
