@@ -11,16 +11,10 @@ import CoreData
 struct GroupListView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @EnvironmentObject private var userService: UserService
-    @FetchRequest(
-        sortDescriptors: [NSSortDescriptor(keyPath: \Group.name, ascending: true)],
-        animation: .default)
-    private var allGroups: FetchedResults<Group>
-    
-    private var groups: [Group] {
-        guard let currentUser = userService.currentUser else { return [] }
-        return allGroups.filter { group in
-            group.members?.contains(currentUser) == true
-        }
+    @EnvironmentObject private var firebaseService: FirebaseService
+    // Use Firebase groups instead of Core Data groups
+    private var groups: [FirebaseGroup] {
+        return firebaseService.groups
     }
     
     @State private var showingAddGroup = false
@@ -28,17 +22,18 @@ struct GroupListView: View {
     @State private var showingFriends = false
     @State private var showingInvitations = false
     @State private var showingFriendRequests = false
+    @State private var showingSwitchUser = false
     @State private var newGroupName = ""
 
     var body: some View {
         NavigationView {
             List {
                 ForEach(groups) { group in
-                    NavigationLink(destination: GroupDetailView(group: group)) {
+                    NavigationLink(destination: FirebaseGroupDetailView(group: group)) {
                         HStack {
                             VStack(alignment: .leading, spacing: 4) {
                                 HStack {
-                                    Text(group.name ?? "Unnamed")
+                                    Text(group.name)
                                         .font(.headline)
                                     
                                     if isGroupCreator(group) {
@@ -53,7 +48,7 @@ struct GroupListView: View {
                                     }
                                 }
                                 
-                                Text("\(group.members?.count ?? 0) members")
+                                Text("\(group.memberIds.count) members")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             }
@@ -83,16 +78,28 @@ struct GroupListView: View {
                             }
                         }
                         
-                        Button(action: { showingFriendRequests = true }) {
+                        Button(action: { 
+                            showingFriendRequests = true 
+                        }) {
                             Label("Friend Requests", systemImage: "person.badge.plus")
-                            if !userService.pendingFriendRequests.isEmpty {
-                                Text("(\(userService.pendingFriendRequests.count))")
+                            if !firebaseService.pendingFriendRequests.isEmpty {
+                                Text("(\(firebaseService.pendingFriendRequests.count))")
                             }
                         }
                         
                         Divider()
                         
-                        Button(action: { userService.signOut() }) {
+                        Button(action: { showingSwitchUser = true }) {
+                            Label("Switch User (Test)", systemImage: "person.2.circle")
+                        }
+                        
+                        Button(action: { 
+                            do {
+                                try firebaseService.signOut()
+                            } catch {
+                                print("Error signing out: \(error)")
+                            }
+                        }) {
                             Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
                         }
                     } label: {
@@ -117,13 +124,16 @@ struct GroupListView: View {
             UserProfileEditView()
         }
         .sheet(isPresented: $showingFriends) {
-            FriendsView()
+            FirebaseFriendsListView()
         }
         .sheet(isPresented: $showingInvitations) {
             GroupInvitationView()
         }
         .sheet(isPresented: $showingFriendRequests) {
-            FriendRequestsView()
+            FirebaseFriendRequestsView()
+        }
+        .sheet(isPresented: $showingSwitchUser) {
+            SwitchUserView()
         }
     }
 
@@ -135,14 +145,25 @@ struct GroupListView: View {
         try? viewContext.save()
     }
 
-    private func isGroupCreator(_ group: Group) -> Bool {
-        return group.creator?.id == userService.currentUser?.id
+    private func isGroupCreator(_ group: FirebaseGroup) -> Bool {
+        return group.creatorId == firebaseService.currentUser?.id
     }
     
     private func deleteGroups(at offsets: IndexSet) {
-        offsets.map { groups[$0] }.forEach(viewContext.delete)
-        try? viewContext.save()
+        let groupsToDelete = offsets.map { groups[$0] }
+        
+        Task {
+            for group in groupsToDelete {
+                guard let groupId = group.id else { continue }
+                do {
+                    try await firebaseService.deleteGroup(groupId: groupId)
+                } catch {
+                    print("Error deleting group: \(error)")
+                }
+            }
+        }
     }
+    
 }
 
 struct AddGroupSheet: View {
@@ -150,6 +171,7 @@ struct AddGroupSheet: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var userService: UserService
+    @EnvironmentObject private var firebaseService: FirebaseService
     
     var body: some View {
         NavigationView {
@@ -180,22 +202,19 @@ struct AddGroupSheet: View {
     }
     
     private func createGroup() {
-        let newGroup = Group(context: viewContext)
-        newGroup.id = UUID()
-        newGroup.name = newGroupName.trimmingCharacters(in: .whitespacesAndNewlines)
-        newGroup.created = Date()
+        let groupName = newGroupName.trimmingCharacters(in: .whitespacesAndNewlines)
         
-        // Set the current user as the creator and add them to the group
-        if let currentUser = userService.currentUser {
-            newGroup.creator = currentUser
-            currentUser.addToGroups(newGroup)
-        }
-        
-        do {
-            try viewContext.save()
-            dismiss()
-        } catch {
-            print("Error creating group: \(error)")
+        Task {
+            do {
+                try await firebaseService.createGroup(name: groupName)
+                await MainActor.run {
+                    dismiss()
+                }
+            } catch {
+                await MainActor.run {
+                    print("Error creating group: \(error)")
+                }
+            }
         }
     }
 }

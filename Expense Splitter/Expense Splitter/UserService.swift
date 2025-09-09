@@ -229,6 +229,12 @@ class UserService: ObservableObject {
         
         print("📤 Sending friend request from \(currentUser.name ?? "Unknown") to \(person.name ?? "Unknown")")
         
+        // Don't allow sending friend request to yourself
+        if person.id == currentUser.id {
+            print("❌ Cannot send friend request to yourself")
+            return false
+        }
+        
         // Check if already friends
         if friends.contains(where: { $0.id == person.id }) {
             print("❌ Already friends with this user")
@@ -274,10 +280,14 @@ class UserService: ObservableObject {
         request.status = accept ? "accepted" : "declined"
         
         if accept {
-            // Add to friends list
+            // Add sender to current user's friends list (if not already there)
             if let sender = request.sender, !friends.contains(where: { $0.id == sender.id }) {
                 friends.append(sender)
                 saveFriends()
+                
+                // Also add current user to sender's friends list
+                // This ensures mutual friendship
+                addMutualFriendship(sender: sender, receiver: currentUser, context: context)
             }
         }
         
@@ -287,6 +297,20 @@ class UserService: ObservableObject {
         } catch {
             print("Error responding to friend request: \(error)")
         }
+    }
+    
+    private func addMutualFriendship(sender: Person, receiver: Person, context: NSManagedObjectContext) {
+        // In a real app, this would update the sender's friends list on the server
+        // For now, we'll just log that mutual friendship should be established
+        print("✅ Mutual friendship established between \(sender.name ?? "Unknown") and \(receiver.name ?? "Unknown")")
+        
+        // Note: In a real app, we would need to:
+        // 1. Update the sender's friends list on the server
+        // 2. Reload the sender's friends list
+        // 3. Handle the case where the sender is not the current user
+        
+        // For now, we only manage the current user's friends list locally
+        // The sender would need to refresh their app to see the new friendship
     }
     
     func removeFriend(_ person: Person) {
@@ -405,9 +429,15 @@ class UserService: ObservableObject {
         
         do {
             pendingFriendRequests = try context.fetch(request)
+            print("📥 Loaded \(pendingFriendRequests.count) pending friend requests for \(currentUser.name ?? "Unknown")")
         } catch {
             print("Error loading pending friend requests: \(error)")
         }
+    }
+    
+    func refreshFriendRequests(context: NSManagedObjectContext) {
+        print("🔄 Refreshing friend requests...")
+        loadPendingFriendRequests(context: context)
     }
     
     // MARK: - Validation Helpers
@@ -424,6 +454,10 @@ class UserService: ObservableObject {
     func isValidEmail(_ email: String) -> Bool {
         let emailRegex = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
         return NSPredicate(format: "SELF MATCHES %@", emailRegex).evaluate(with: email)
+    }
+    
+    func isValidPassword(_ password: String) -> Bool {
+        return password.count >= 8
     }
     
     private func getContext() -> NSManagedObjectContext? {

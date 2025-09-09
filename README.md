@@ -1,6 +1,6 @@
 # Expense Splitter App
 
-A comprehensive iOS expense splitting application built with SwiftUI and Core Data, designed to help friends and groups manage shared expenses efficiently.
+A comprehensive iOS expense splitting application built with SwiftUI, Firebase, and Core Data, designed to help friends and groups manage shared expenses efficiently.
 
 ## Overview
 
@@ -11,9 +11,18 @@ The Expense Splitter app allows users to:
 - Manage user profiles with contact information
 - Handle group invitations and friend requests
 
-## Core Data Model
+## Data Architecture
 
-The app uses Core Data for persistent storage with the following entities:
+The app uses a hybrid approach with Firebase for real-time features and Core Data for local persistence:
+
+### Firebase Integration
+- **Authentication**: User sign-up, sign-in, and session management
+- **Real-time Database**: User profiles, friend requests, and groups
+- **Cloud Storage**: Centralized data accessible across devices
+
+### Core Data Model (Legacy)
+
+The app maintains Core Data for backward compatibility and local features:
 
 ### Person Entity
 - **Attributes**: `id` (UUID), `name` (String), `username` (String), `phoneNumber` (String), `email` (String), `isCurrentUser` (Boolean)
@@ -52,93 +61,134 @@ The app uses Core Data for persistent storage with the following entities:
 
 ## Key Features
 
-### User Management
-- **User Registration**: New users create profiles with username, name, phone number, and email
+### Authentication & User Management
+- **Firebase Authentication**: Secure user sign-up and sign-in with email/password
+- **Username Login**: Login with either email or username
 - **Profile Management**: Users can edit their profile information
-- **Current User Tracking**: The app automatically tracks the current user across sessions
+- **Password Requirements**: Minimum 8 characters for security
 
-### Friend System
-- **Add Friends**: Search for users by username or phone number
-- **Friend Management**: View and manage your friends list
-- **Friend Requests**: Send and accept friend requests
+### Friend System (Firebase)
+- **Add Friends**: Search for users by username with real-time results
+- **Friend Requests**: Send and accept friend requests with real-time updates
+- **Friends List**: View and manage your friends list with search functionality
+- **Real-time Updates**: Friend requests and status changes sync instantly
 
-### Group Management
-- **Create Groups**: Users can create new expense groups
-- **Auto-join**: Group creators are automatically added as members
-- **Group Invitations**: Invite friends to join groups
-- **Member Management**: Add/remove members from groups
+### Group Management (Firebase)
+- **Create Groups**: Users can create new expense groups stored in Firebase
+- **Group Display**: View all groups with creator information
+- **Group Deletion**: Group creators can delete their groups
+- **Real-time Sync**: Group changes sync across all devices
 
-### Invitation System
-- **Group Invitations**: Send invitations to friends to join groups
-- **Invitation Management**: Accept or decline group invitations
-- **Status Tracking**: Track invitation status (pending, accepted, declined)
+### Legacy Features (Core Data)
+- **Local Data**: Maintains backward compatibility with existing data
+- **Offline Support**: Core Data provides offline functionality
 
 ## Views and Components
 
 ### Main App Structure
-- **Expense_SplitterApp**: Main app entry point with user authentication flow
+- **Expense_SplitterApp**: Main app entry point with Firebase initialization
+- **FirebaseAuthView**: Login/signup interface with Firebase authentication
+- **GroupListView**: Main dashboard showing all user's groups (Firebase)
+
+### Firebase Views
+- **FirebaseFriendsView**: Search and add friends using Firebase
+- **FirebaseFriendsListView**: Display current user's friends list
+- **FirebaseFriendRequestsView**: Manage incoming friend requests
+- **FirebaseGroupDetailView**: Display Firebase group details
+
+### Legacy Views (Core Data)
 - **UserRegistrationView**: Initial user setup and profile creation
-- **GroupListView**: Main dashboard showing all user's groups
-
-### User Management Views
-- **UserProfileEditView**: Edit user profile information
-- **FriendsView**: Manage friends and send friend requests
-- **GroupInvitationView**: View and respond to group invitations
-
-### Group Management Views
+- **UserProfileEditView**: Edit user profile information (hybrid Firebase/Core Data)
+- **FriendsView**: Legacy friend management
 - **GroupDetailView**: Detailed view of a specific group
-- **AddGroupSheet**: Modal for creating new groups
-- **EditGroupSheet**: Modal for editing group information
-- **InviteFriendsToGroupView**: Modal for inviting friends to groups
+- **GroupInvitationView**: View and respond to group invitations
 
 ## Services
 
-### UserService
-Central service managing user-related operations:
-- User profile management
-- Friend management
-- Group invitation handling
-- User search functionality
-- Current user state management
+### FirebaseService
+Primary service for Firebase operations:
+- **Authentication**: User sign-up, sign-in, sign-out
+- **User Management**: Profile creation and updates
+- **Friend System**: Friend requests, acceptance, and management
+- **Group Management**: Create, delete, and manage groups
+- **Real-time Updates**: Live data synchronization across devices
 
-### UserManager (Legacy)
-Older user management service (being phased out in favor of UserService):
-- Basic user profile operations
-- Group membership management
+### UserService (Legacy)
+Core Data service for local operations:
+- User profile management (fallback)
+- Local data persistence
+- Backward compatibility
 
 ## Data Flow
 
+### Firebase Flow (Primary)
+1. **Authentication**: Users sign up/sign in through `FirebaseAuthView`
+2. **Friend Management**: Users add friends through `FirebaseFriendsView`
+3. **Group Creation**: Users create groups through `GroupListView` (Firebase)
+4. **Real-time Updates**: All changes sync instantly across devices
+
+### Legacy Flow (Core Data)
 1. **User Registration**: New users create profiles through `UserRegistrationView`
-2. **Friend Management**: Users add friends through `FriendsView`
-3. **Group Creation**: Users create groups through `GroupListView`
-4. **Invitations**: Group creators invite friends through `GroupDetailView`
-5. **Invitation Response**: Friends respond to invitations through `GroupInvitationView`
+2. **Local Management**: Friends and groups managed locally
+3. **Offline Support**: Works without internet connection
 
 ## Technical Architecture
 
-- **Framework**: SwiftUI for UI, Core Data for persistence
+- **Framework**: SwiftUI for UI, Firebase for cloud services, Core Data for local persistence
+- **Authentication**: Firebase Auth with email/password and username support
+- **Database**: Firestore for real-time cloud data, Core Data for local storage
 - **Data Management**: `@EnvironmentObject` for service injection
 - **State Management**: `@Published` properties for reactive updates
+- **Real-time Updates**: Firestore listeners for live data synchronization
 - **Navigation**: `NavigationLink` and sheet presentations
-- **Data Persistence**: Core Data with automatic relationship management
 
 ## Current Status
 
 The app currently provides a solid foundation for:
-- ✅ User profile management
-- ✅ Friend system
-- ✅ Group creation and management
-- ✅ Invitation system
-- ✅ Basic expense tracking structure
+- ✅ **Firebase Authentication**: Secure user sign-up and sign-in
+- ✅ **User Profile Management**: Create and edit user profiles
+- ✅ **Friend System**: Search, add, and manage friends with real-time updates
+- ✅ **Group Creation**: Create and delete groups with Firebase storage
+- ✅ **Real-time Data Sync**: All changes sync instantly across devices
+- ✅ **Hybrid Architecture**: Firebase for new features, Core Data for legacy support
 
-## Future Enhancements
+## TODO - Next Steps
 
-- Expense splitting calculations
-- Receipt scanning and OCR
-- Automatic tip and tax splitting
-- Payment tracking and settlement
-- Push notifications for invitations
-- Export functionality for expense reports
+### High Priority
+1. **Group Member Management**: 
+   - Add ability to invite friends to groups
+   - Implement group member addition/removal
+   - Create group invitation system
+   - Allow users to join/leave groups
+
+2. **Group Detail Enhancement**:
+   - Expand `FirebaseGroupDetailView` with full functionality
+   - Add member list display
+   - Implement group settings and management
+
+3. **Expense Management**:
+   - Create expense tracking system for groups
+   - Implement expense splitting calculations
+   - Add expense history and reporting
+
+### Medium Priority
+4. **Receipt Processing**:
+   - Integrate image recognition for receipt scanning
+   - Implement OCR for automatic expense extraction
+   - Add manual expense item assignment
+
+5. **Advanced Features**:
+   - Automatic tip and tax splitting
+   - Payment tracking and settlement
+   - Push notifications for invitations
+   - Export functionality for expense reports
+
+### Low Priority
+6. **UI/UX Improvements**:
+   - Enhanced visual design
+   - Better error handling and user feedback
+   - Accessibility improvements
+   - Performance optimizations
 
 ## Getting Started
 
@@ -153,4 +203,5 @@ The app currently provides a solid foundation for:
 - iOS 18.4+
 - Xcode 16+
 - SwiftUI
-- Core Data
+- Firebase SDK (Auth, Firestore)
+- Core Data (legacy support)

@@ -9,6 +9,7 @@ import SwiftUI
 
 struct UserProfileEditView: View {
     @StateObject private var userService = UserService.shared
+    @StateObject private var firebaseService = FirebaseService.shared
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.dismiss) private var dismiss
     
@@ -147,12 +148,18 @@ struct UserProfileEditView: View {
     }
     
     private func loadCurrentProfile() {
-        guard let user = userService.currentUser else { return }
-        
-        username = user.username ?? ""
-        fullName = user.name ?? ""
-        phoneNumber = user.phoneNumber ?? ""
-        email = user.email ?? ""
+        // Try Firebase user first, then fall back to Core Data user
+        if let firebaseUser = firebaseService.currentUser {
+            username = firebaseUser.username
+            fullName = firebaseUser.name
+            phoneNumber = firebaseUser.phoneNumber ?? ""
+            email = firebaseUser.email ?? ""
+        } else if let user = userService.currentUser {
+            username = user.username ?? ""
+            fullName = user.name ?? ""
+            phoneNumber = user.phoneNumber ?? ""
+            email = user.email ?? ""
+        }
     }
     
     private func saveProfile() {
@@ -160,21 +167,48 @@ struct UserProfileEditView: View {
         
         let emailValue = email.isEmpty ? nil : email
         
-        let success = userService.updateUserProfile(
-            username: username,
-            name: fullName,
-            phoneNumber: phoneNumber,
-            email: emailValue,
-            context: viewContext
-        )
-        
-        isSaving = false
-        
-        if success {
-            dismiss()
+        // If using Firebase, update Firebase user profile
+        if firebaseService.currentUser != nil {
+            Task {
+                do {
+                    // Update Firebase user profile
+                    try await firebaseService.updateUserProfile(
+                        username: username,
+                        name: fullName,
+                        phoneNumber: phoneNumber,
+                        email: emailValue
+                    )
+                    
+                    await MainActor.run {
+                        isSaving = false
+                        dismiss()
+                    }
+                } catch {
+                    await MainActor.run {
+                        isSaving = false
+                        alertMessage = "Failed to update profile: \(error.localizedDescription)"
+                        showingAlert = true
+                    }
+                }
+            }
         } else {
-            alertMessage = "Username already exists. Please choose a different username."
-            showingAlert = true
+            // Fall back to Core Data
+            let success = userService.updateUserProfile(
+                username: username,
+                name: fullName,
+                phoneNumber: phoneNumber,
+                email: emailValue,
+                context: viewContext
+            )
+            
+            isSaving = false
+            
+            if success {
+                dismiss()
+            } else {
+                alertMessage = "Username already exists. Please choose a different username."
+                showingAlert = true
+            }
         }
     }
 }

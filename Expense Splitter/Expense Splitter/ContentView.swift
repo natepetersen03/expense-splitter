@@ -9,12 +9,13 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject private var userService: UserService
+    @EnvironmentObject private var firebaseService: FirebaseService
     
     var body: some View {
-        if userService.currentUser != nil {
+        if firebaseService.currentUser != nil {
             GroupListView()
         } else {
-            LoginView()
+            FirebaseAuthView()
         }
     }
 }
@@ -22,4 +23,5 @@ struct ContentView: View {
 #Preview {
     ContentView()
         .environmentObject(UserService.shared)
+        .environmentObject(FirebaseService.shared)
 }
