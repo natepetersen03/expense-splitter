@@ -222,10 +222,16 @@ class UserService: ObservableObject {
     // MARK: - Friends Management
     
     func sendFriendRequest(to person: Person, context: NSManagedObjectContext) -> Bool {
-        guard let currentUser = currentUser else { return false }
+        guard let currentUser = currentUser else { 
+            print("❌ No current user found")
+            return false 
+        }
+        
+        print("📤 Sending friend request from \(currentUser.name ?? "Unknown") to \(person.name ?? "Unknown")")
         
         // Check if already friends
         if friends.contains(where: { $0.id == person.id }) {
+            print("❌ Already friends with this user")
             return false
         }
         
@@ -236,6 +242,7 @@ class UserService: ObservableObject {
         }
         
         if existingRequest != nil {
+            print("❌ Friend request already exists")
             return false
         }
         
@@ -247,12 +254,16 @@ class UserService: ObservableObject {
         friendRequest.sender = currentUser
         friendRequest.receiver = person
         
+        print("✅ Created friend request object")
+        
         do {
             try context.save()
+            print("✅ Saved friend request to Core Data")
             loadPendingFriendRequests(context: context)
+            print("✅ Reloaded pending friend requests")
             return true
         } catch {
-            print("Error sending friend request: \(error)")
+            print("❌ Error sending friend request: \(error)")
             return false
         }
     }

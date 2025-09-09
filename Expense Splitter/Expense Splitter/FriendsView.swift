@@ -251,7 +251,11 @@ struct AddFriendView: View {
     }
     
     private func addFriend(_ user: Person) {
-        guard let currentUser = userService.currentUser else { return }
+        guard let currentUser = userService.currentUser else { 
+            alertMessage = "Please sign in to add friends"
+            showingAlert = true
+            return 
+        }
         
         // Don't add yourself as a friend
         if user.id == currentUser.id {
@@ -267,13 +271,25 @@ struct AddFriendView: View {
             return
         }
         
+        // Check if there's already a pending request
+        let hasPendingRequest = userService.pendingFriendRequests.contains { request in
+            (request.sender?.id == currentUser.id && request.receiver?.id == user.id) ||
+            (request.sender?.id == user.id && request.receiver?.id == currentUser.id)
+        }
+        
+        if hasPendingRequest {
+            alertMessage = "You already have a pending friend request with this user"
+            showingAlert = true
+            return
+        }
+        
         // Send friend request
         let success = userService.sendFriendRequest(to: user, context: viewContext)
         if success {
-            alertMessage = "Friend request sent!"
+            alertMessage = "Friend request sent successfully!"
             showingAlert = true
         } else {
-            alertMessage = "Unable to send friend request. You may have already sent one or received one from this user."
+            alertMessage = "Failed to send friend request. Please try again."
             showingAlert = true
         }
     }
