@@ -82,6 +82,8 @@ struct SignUpView: View {
                             
                             SecureField("Create a password", text: $password)
                                 .textFieldStyle(RoundedBorderTextFieldStyle())
+                                .textContentType(.newPassword)
+                                .autocorrectionDisabled()
                         }
                         
                         VStack(alignment: .leading, spacing: 8) {
@@ -90,6 +92,8 @@ struct SignUpView: View {
                             
                             SecureField("Confirm your password", text: $confirmPassword)
                                 .textFieldStyle(RoundedBorderTextFieldStyle())
+                                .textContentType(.newPassword)
+                                .autocorrectionDisabled()
                         }
                         
                         Button("Create Account") {

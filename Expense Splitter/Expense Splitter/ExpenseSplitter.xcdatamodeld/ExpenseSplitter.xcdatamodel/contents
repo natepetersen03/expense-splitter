@@ -36,7 +36,9 @@
         <relationship name="createdGroups" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Group" inverseName="creator" inverseEntity="Group"/>
         <relationship name="expensesPaid" toMany="YES" deletionRule="Nullify" destinationEntity="Expense" inverseName="payer" inverseEntity="Expense"/>
         <relationship name="groups" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Group" inverseName="members" inverseEntity="Group"/>
+        <relationship name="receivedFriendRequests" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="FriendRequest" inverseName="receiver" inverseEntity="FriendRequest"/>
         <relationship name="receivedInvitations" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="GroupInvitation" inverseName="invitee" inverseEntity="GroupInvitation"/>
+        <relationship name="sentFriendRequests" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="FriendRequest" inverseName="sender" inverseEntity="FriendRequest"/>
         <relationship name="sentInvitations" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="GroupInvitation" inverseName="inviter" inverseEntity="GroupInvitation"/>
     </entity>
     <entity name="GroupInvitation" representedClassName="GroupInvitation" syncable="YES" codeGenerationType="class">
@@ -46,5 +48,12 @@
         <relationship name="group" maxCount="1" deletionRule="Nullify" destinationEntity="Group" inverseName="invitations" inverseEntity="Group"/>
         <relationship name="invitee" maxCount="1" deletionRule="Nullify" destinationEntity="Person" inverseName="receivedInvitations" inverseEntity="Person"/>
         <relationship name="inviter" maxCount="1" deletionRule="Nullify" destinationEntity="Person" inverseName="sentInvitations" inverseEntity="Person"/>
+    </entity>
+    <entity name="FriendRequest" representedClassName="FriendRequest" syncable="YES" codeGenerationType="class">
+        <attribute name="created" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="status" attributeType="String" defaultValueString="pending"/>
+        <relationship name="receiver" maxCount="1" deletionRule="Nullify" destinationEntity="Person" inverseName="receivedFriendRequests" inverseEntity="Person"/>
+        <relationship name="sender" maxCount="1" deletionRule="Nullify" destinationEntity="Person" inverseName="sentFriendRequests" inverseEntity="Person"/>
     </entity>
 </model>

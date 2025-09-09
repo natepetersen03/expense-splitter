@@ -15,6 +15,7 @@ class UserService: ObservableObject {
     @Published var currentUser: Person?
     @Published var friends: [Person] = []
     @Published var pendingInvitations: [GroupInvitation] = []
+    @Published var pendingFriendRequests: [FriendRequest] = []
     
     private let userDefaults = UserDefaults.standard
     private let currentUserIdKey = "currentUserId"
@@ -31,6 +32,7 @@ class UserService: ObservableObject {
         loadCurrentUser(context: context)
         loadFriends(context: context)
         loadPendingInvitations(context: context)
+        loadPendingFriendRequests(context: context)
     }
     
     // MARK: - Authentication
@@ -219,12 +221,60 @@ class UserService: ObservableObject {
     
     // MARK: - Friends Management
     
-    func addFriend(_ person: Person, context: NSManagedObjectContext) {
-        // For now, we'll implement a simple friends system
-        // In a real app, this would involve server-side friend requests
-        if !friends.contains(where: { $0.id == person.id }) {
-            friends.append(person)
-            saveFriends()
+    func sendFriendRequest(to person: Person, context: NSManagedObjectContext) -> Bool {
+        guard let currentUser = currentUser else { return false }
+        
+        // Check if already friends
+        if friends.contains(where: { $0.id == person.id }) {
+            return false
+        }
+        
+        // Check if request already exists
+        let existingRequest = pendingFriendRequests.first { request in
+            (request.sender?.id == currentUser.id && request.receiver?.id == person.id) ||
+            (request.sender?.id == person.id && request.receiver?.id == currentUser.id)
+        }
+        
+        if existingRequest != nil {
+            return false
+        }
+        
+        // Create friend request
+        let friendRequest = FriendRequest(context: context)
+        friendRequest.id = UUID()
+        friendRequest.created = Date()
+        friendRequest.status = "pending"
+        friendRequest.sender = currentUser
+        friendRequest.receiver = person
+        
+        do {
+            try context.save()
+            loadPendingFriendRequests(context: context)
+            return true
+        } catch {
+            print("Error sending friend request: \(error)")
+            return false
+        }
+    }
+    
+    func respondToFriendRequest(_ request: FriendRequest, accept: Bool, context: NSManagedObjectContext) {
+        guard let currentUser = currentUser else { return }
+        
+        request.status = accept ? "accepted" : "declined"
+        
+        if accept {
+            // Add to friends list
+            if let sender = request.sender, !friends.contains(where: { $0.id == sender.id }) {
+                friends.append(sender)
+                saveFriends()
+            }
+        }
+        
+        do {
+            try context.save()
+            loadPendingFriendRequests(context: context)
+        } catch {
+            print("Error responding to friend request: \(error)")
         }
     }
     
@@ -333,6 +383,19 @@ class UserService: ObservableObject {
             pendingInvitations = try context.fetch(request)
         } catch {
             print("Error loading pending invitations: \(error)")
+        }
+    }
+    
+    private func loadPendingFriendRequests(context: NSManagedObjectContext) {
+        guard let currentUser = currentUser else { return }
+        
+        let request: NSFetchRequest<FriendRequest> = FriendRequest.fetchRequest()
+        request.predicate = NSPredicate(format: "receiver == %@ AND status == 'pending'", currentUser)
+        
+        do {
+            pendingFriendRequests = try context.fetch(request)
+        } catch {
+            print("Error loading pending friend requests: \(error)")
         }
     }
     

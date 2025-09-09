@@ -27,6 +27,7 @@ struct GroupListView: View {
     @State private var showingProfileEdit = false
     @State private var showingFriends = false
     @State private var showingInvitations = false
+    @State private var showingFriendRequests = false
     @State private var newGroupName = ""
 
     var body: some View {
@@ -82,6 +83,13 @@ struct GroupListView: View {
                             }
                         }
                         
+                        Button(action: { showingFriendRequests = true }) {
+                            Label("Friend Requests", systemImage: "person.badge.plus")
+                            if !userService.pendingFriendRequests.isEmpty {
+                                Text("(\(userService.pendingFriendRequests.count))")
+                            }
+                        }
+                        
                         Divider()
                         
                         Button(action: { userService.signOut() }) {
@@ -113,6 +121,9 @@ struct GroupListView: View {
         }
         .sheet(isPresented: $showingInvitations) {
             GroupInvitationView()
+        }
+        .sheet(isPresented: $showingFriendRequests) {
+            FriendRequestsView()
         }
     }
 

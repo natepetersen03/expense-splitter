@@ -50,6 +50,8 @@ struct LoginView: View {
                         
                         SecureField("Enter your password", text: $password)
                             .textFieldStyle(RoundedBorderTextFieldStyle())
+                            .textContentType(.password)
+                            .autocorrectionDisabled()
                     }
                     
                     Button("Sign In") {

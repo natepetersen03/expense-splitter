@@ -106,6 +106,8 @@ struct UserRegistrationView: View {
                                 .font(.headline)
                             SecureField("Create a password", text: $password)
                                 .textFieldStyle(.roundedBorder)
+                                .textContentType(.newPassword)
+                                .autocorrectionDisabled()
                             
                             if !password.isEmpty && password.count < 6 {
                                 Text("Password must be at least 6 characters")
@@ -120,6 +122,8 @@ struct UserRegistrationView: View {
                                 .font(.headline)
                             SecureField("Confirm your password", text: $confirmPassword)
                                 .textFieldStyle(.roundedBorder)
+                                .textContentType(.newPassword)
+                                .autocorrectionDisabled()
                             
                             if !confirmPassword.isEmpty && password != confirmPassword {
                                 Text("Passwords do not match")

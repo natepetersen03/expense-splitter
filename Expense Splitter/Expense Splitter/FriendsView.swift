@@ -172,6 +172,8 @@ struct AddFriendView: View {
                 HStack {
                     TextField("Username or phone number", text: $searchText)
                         .textFieldStyle(.roundedBorder)
+                        .autocapitalization(.none)
+                        .disableAutocorrection(true)
                         .onSubmit {
                             searchForUser()
                         }
@@ -265,8 +267,15 @@ struct AddFriendView: View {
             return
         }
         
-        userService.addFriend(user, context: viewContext)
-        dismiss()
+        // Send friend request
+        let success = userService.sendFriendRequest(to: user, context: viewContext)
+        if success {
+            alertMessage = "Friend request sent!"
+            showingAlert = true
+        } else {
+            alertMessage = "Unable to send friend request. You may have already sent one or received one from this user."
+            showingAlert = true
+        }
     }
 }
 
