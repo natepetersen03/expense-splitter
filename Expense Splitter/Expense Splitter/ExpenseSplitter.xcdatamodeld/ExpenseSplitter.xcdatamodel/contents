@@ -11,10 +11,13 @@
         <relationship name="payer" maxCount="1" deletionRule="Nullify" destinationEntity="Person" inverseName="expensesPaid" inverseEntity="Person"/>
     </entity>
     <entity name="Group" representedClassName="Group" syncable="YES" codeGenerationType="class">
+        <attribute name="created" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="name" attributeType="String"/>
+        <relationship name="creator" maxCount="1" deletionRule="Nullify" destinationEntity="Person" inverseName="createdGroups" inverseEntity="Person"/>
         <relationship name="expenses" optional="YES" toMany="YES" deletionRule="Nullify" ordered="YES" destinationEntity="Expense" inverseName="group" inverseEntity="Expense"/>
-        <relationship name="members" toMany="YES" deletionRule="Nullify" destinationEntity="Person" inverseName="group" inverseEntity="Person"/>
+        <relationship name="invitations" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="GroupInvitation" inverseName="group" inverseEntity="GroupInvitation"/>
+        <relationship name="members" toMany="YES" deletionRule="Nullify" destinationEntity="Person" inverseName="groups" inverseEntity="Person"/>
     </entity>
     <entity name="LineItem" representedClassName="LineItem" syncable="YES" codeGenerationType="class">
         <attribute name="amount" attributeType="Decimal" defaultValueString="0.0"/>
@@ -23,9 +26,24 @@
         <relationship name="expense" maxCount="1" deletionRule="Nullify" destinationEntity="Expense" inverseName="items" inverseEntity="Expense"/>
     </entity>
     <entity name="Person" representedClassName="Person" syncable="YES" codeGenerationType="class">
+        <attribute name="email" optional="YES" attributeType="String"/>
         <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="isCurrentUser" optional="YES" attributeType="Boolean" defaultValueString="NO"/>
         <attribute name="name" attributeType="String"/>
+        <attribute name="phoneNumber" optional="YES" attributeType="String"/>
+        <attribute name="username" optional="YES" attributeType="String"/>
+        <relationship name="createdGroups" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Group" inverseName="creator" inverseEntity="Group"/>
         <relationship name="expensesPaid" toMany="YES" deletionRule="Nullify" destinationEntity="Expense" inverseName="payer" inverseEntity="Expense"/>
-        <relationship name="group" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Group" inverseName="members" inverseEntity="Group"/>
+        <relationship name="groups" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Group" inverseName="members" inverseEntity="Group"/>
+        <relationship name="receivedInvitations" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="GroupInvitation" inverseName="invitee" inverseEntity="GroupInvitation"/>
+        <relationship name="sentInvitations" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="GroupInvitation" inverseName="inviter" inverseEntity="GroupInvitation"/>
+    </entity>
+    <entity name="GroupInvitation" representedClassName="GroupInvitation" syncable="YES" codeGenerationType="class">
+        <attribute name="created" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="status" attributeType="String" defaultValueString="pending"/>
+        <relationship name="group" maxCount="1" deletionRule="Nullify" destinationEntity="Group" inverseName="invitations" inverseEntity="Group"/>
+        <relationship name="invitee" maxCount="1" deletionRule="Nullify" destinationEntity="Person" inverseName="receivedInvitations" inverseEntity="Person"/>
+        <relationship name="inviter" maxCount="1" deletionRule="Nullify" destinationEntity="Person" inverseName="sentInvitations" inverseEntity="Person"/>
     </entity>
 </model>

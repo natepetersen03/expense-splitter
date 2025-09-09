@@ -8,17 +8,18 @@
 import SwiftUI
 
 struct ContentView: View {
+    @EnvironmentObject private var userService: UserService
+    
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        if userService.currentUser != nil {
+            GroupListView()
+        } else {
+            UserRegistrationView()
         }
-        .padding()
     }
 }
 
 #Preview {
     ContentView()
+        .environmentObject(UserService.shared)
 }
