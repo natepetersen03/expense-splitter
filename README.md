@@ -190,6 +190,31 @@ The app currently provides a solid foundation for:
    - Accessibility improvements
    - Performance optimizations
 
+## Getting Started
+
+### Prerequisites
+1. **Firebase Project Setup**:
+   - Create a Firebase project at [Firebase Console](https://console.firebase.google.com/)
+   - Enable Authentication with Email/Password sign-in method
+   - Create a Firestore database
+   - Download your `GoogleService-Info.plist` file
+
+2. **Local Configuration**:
+   - Copy `GoogleService-Info.plist.template` to `GoogleService-Info.plist`
+   - Replace all placeholder values with your actual Firebase configuration
+   - Ensure `GoogleService-Info.plist` is added to your Xcode project target
+
+### Running the App
+1. Open the project in Xcode
+2. Build and run on iOS Simulator or device
+3. Sign up for a new account or sign in with existing credentials
+4. Add friends and create groups
+5. Start managing shared expenses!
+
+### Security Note
+- Never commit `GoogleService-Info.plist` to version control
+- Each developer should use their own Firebase project or shared project credentials
+- The `.gitignore` file prevents accidental commits of sensitive configuration
 
 ## Dependencies
 
